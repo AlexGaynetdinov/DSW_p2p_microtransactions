@@ -26,13 +26,36 @@ Rails.application.routes.draw do
   # Credit card top-up
   post   '/top_up_balance', to: 'balance#top_up'
 
+  # POS payments
+  post '/pos_payment', to: 'pos_payments#create'
+
   # Transactions
   resources :transactions, only: [:create, :index]
-
+  # Money requests
   resources :money_requests, only: [:create, :index] do
     member do
       post 'accept'
       post 'reject'
+    end
+  end
+  # Split transactions
+  resources :split_transactions, only: [:create]
+  resources :split_participants, only: [:index] do
+    member do
+      post 'accept'
+      post 'reject'
+    end
+  end
+
+  # Friendships
+  resources :friendships, only: [:create, :index] do
+    collection do
+      get 'incoming'
+    end
+    member do
+      post 'accept'
+      post 'deny'
+      delete 'revoke'
     end
   end
 

@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_19_165842) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_21_163159) do
+  create_table "friendships", force: :cascade do |t|
+    t.integer "requester_id", null: false
+    t.integer "receiver_id", null: false
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["receiver_id"], name: "index_friendships_on_receiver_id"
+    t.index ["requester_id"], name: "index_friendships_on_requester_id"
+  end
+
   create_table "money_requests", force: :cascade do |t|
     t.integer "requester_id", null: false
     t.integer "recipient_id", null: false
@@ -21,6 +31,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_19_165842) do
     t.datetime "updated_at", null: false
     t.index ["recipient_id"], name: "index_money_requests_on_recipient_id"
     t.index ["requester_id"], name: "index_money_requests_on_requester_id"
+  end
+
+  create_table "split_participants", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "split_transaction_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "status", default: "pending"
+    t.decimal "share", default: "0.0", null: false
+    t.index ["split_transaction_id"], name: "index_split_participants_on_split_transaction_id"
+    t.index ["user_id"], name: "index_split_participants_on_user_id"
+  end
+
+  create_table "split_transactions", force: :cascade do |t|
+    t.integer "creator_id", null: false
+    t.decimal "amount"
+    t.string "message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["creator_id"], name: "index_split_transactions_on_creator_id"
   end
 
   create_table "transactions", force: :cascade do |t|
@@ -49,8 +79,13 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_19_165842) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "friendships", "users", column: "receiver_id"
+  add_foreign_key "friendships", "users", column: "requester_id"
   add_foreign_key "money_requests", "users", column: "recipient_id"
   add_foreign_key "money_requests", "users", column: "requester_id"
+  add_foreign_key "split_participants", "split_transactions"
+  add_foreign_key "split_participants", "users"
+  add_foreign_key "split_transactions", "users", column: "creator_id"
   add_foreign_key "transactions", "users", column: "recipient_id"
   add_foreign_key "transactions", "users", column: "sender_id"
 end
