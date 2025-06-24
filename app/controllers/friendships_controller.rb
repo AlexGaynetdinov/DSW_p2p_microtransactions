@@ -75,4 +75,43 @@ class FriendshipsController < ApplicationController
 
     render json: data
   end
+
+  def outgoing
+    friendships = Friendship.includes(:receiver).where(requester: current_user).order(created_at: :desc)
+    render json: friendships.map { |f|
+      {
+        id: f.id,
+        status: f.status,
+        created_at: f.created_at,
+        receiver: {
+          id: f.receiver.id,
+          name: f.receiver.name,
+          email: f.receiver.email
+        }
+      }
+    }
+  end
+
+  def all
+    return render json: { error: 'Forbidden' }, status: :forbidden unless current_user.admin?
+
+    friendships = Friendship.includes(:requester, :receiver).order(created_at: :desc)
+    render json: friendships.map { |f|
+      {
+        id: f.id,
+        status: f.status,
+        created_at: f.created_at,
+        requester: {
+          id: f.requester.id,
+          name: f.requester.name,
+          email: f.requester.email
+        },
+        receiver: {
+          id: f.receiver.id,
+          name: f.receiver.name,
+          email: f.receiver.email
+        }
+      }
+    }
+  end
 end

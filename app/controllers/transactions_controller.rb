@@ -35,6 +35,28 @@ class TransactionsController < ApplicationController
     render json: transactions
   end
 
+  def admin_revert
+    return render json: { error: 'Forbidden' }, status: :forbidden unless current_user.admin?
+
+    original = Transaction.find_by(id: params[:id])
+    unless original
+      return render json: { error: 'Original transaction not found' }, status: :not_found
+    end
+
+    reversed = Transaction.create(
+      sender_id: original.recipient_id,
+      recipient_id: original.sender_id,
+      amount: original.amount,
+      message: 'Pay App - admin refund'
+    )
+
+    if reversed.persisted?
+      render json: {message: 'Transaction reversed successfully', transaction: reversed}
+    else
+      render json: { error: reversed.errors.full_messages.join(', ') }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def transaction_params

@@ -26,9 +26,20 @@ class UsersController < ApplicationController
   end
 
   def destroy
-    authorize @user
-    @user.destroy
-    head :no_content
+    return render json: { error: 'Forbidden' }, status: :forbidden unless current_user.admin?
+
+    user = User.find_by(id: params[:id])
+    if user.nil?
+      return render json: { error: 'User not found' }, status: :not_found
+    end
+
+    user.soft_delete
+    render json: { message: 'User marked as deleted' }
+  end
+
+  def merchants
+    merchants = User.where(role: 'merchant').select(:id, :name, :email)
+    render json: merchants
   end
 
   private

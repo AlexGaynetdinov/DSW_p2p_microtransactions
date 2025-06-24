@@ -38,6 +38,53 @@ class SplitTransactionsController < ApplicationController
     }, status: :created
   end
 
+  def index
+    splits = SplitTransaction.includes(:split_participants => :user).where(creator: current_user).order(created_at: :desc)
+    render json: splits.map { |split|
+      {
+        id: split.id,
+        message: split.message,
+        total_amount: split.amount,
+        created_at: split.created_at,
+        participants: split.split_participants.map { |p|
+          {
+            email: p.user.email,
+            share: p.share,
+            status: p.status
+          }
+        }
+      }
+    }
+  end
+
+  def all
+    return render json: { error: 'Forbidden' }, status: :forbidden unless current_user.admin?
+
+    splits = SplitTransaction.includes(:creator, split_participants: :user).order(created_at: :desc)
+
+    render json: splits.map { |s|
+      {
+        id: s.id,
+        message: s.message,
+        total_amount: s.amount,
+        created_at: s.created_at,
+        creator: {
+          id: s.creator.id,
+          email: s.creator.email,
+          name: s.creator.name
+        },
+        participants: s.split_participants.map { |p|
+          {
+            id: p.id,
+            email: p.user.email,
+            share: p.share,
+            status: p.status
+          }
+        }
+      }
+    }
+  end
+
   private
 
   def split_params

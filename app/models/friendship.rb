@@ -11,9 +11,15 @@ class Friendship < ApplicationRecord
   end
 
   def not_duplicate
-    if Friendship.exists?(requester: requester, receiver: receiver) ||
-       Friendship.exists?(requester: receiver, receiver: requester)
-      errors.add(:base, "Friendship already exists or pending")
+    existing = Friendship.find_by(requester: requester, receiver: receiver) ||
+               Friendship.find_by(requester: receiver, receiver: requester)
+    
+    if existing
+      if existing.status == 'denied'
+        existing.destroy # Allow resending after denial
+      else
+        errors.add(:base, "Friendship already exists or is pending")
+      end
     end
   end
 end

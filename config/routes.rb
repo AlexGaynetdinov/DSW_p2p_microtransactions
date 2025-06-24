@@ -22,6 +22,7 @@ Rails.application.routes.draw do
   get    '/users/:id',    to: 'users#show'
   put    '/users/:id',    to: 'users#update'
   delete '/users/:id',    to: 'users#destroy'
+  get   '/merchants',    to: 'users#merchants'
 
   # Credit card top-up
   post   '/top_up_balance', to: 'balance#top_up'
@@ -30,8 +31,10 @@ Rails.application.routes.draw do
   post '/pos_payment', to: 'pos_payments#create'
 
   # Transactions
+  post 'admin/transactions/:id/revert', to: 'transactions#admin_revert'
   resources :transactions, only: [:create, :index]
   # Money requests
+  get 'money_requests/sent', to: 'money_requests#sent'
   resources :money_requests, only: [:create, :index] do
     member do
       post 'accept'
@@ -39,6 +42,8 @@ Rails.application.routes.draw do
     end
   end
   # Split transactions
+  get 'split_transactions', to: 'split_transactions#index'
+  get 'admin/split_transactions', to: 'split_transactions#all'
   resources :split_transactions, only: [:create]
   resources :split_participants, only: [:index] do
     member do
@@ -48,6 +53,8 @@ Rails.application.routes.draw do
   end
 
   # Friendships
+  get 'friendships/outgoing', to: 'friendships#outgoing'
+  get '/admin/friendships', to: 'friendships#all'
   resources :friendships, only: [:create, :index] do
     collection do
       get 'incoming'
@@ -59,6 +66,6 @@ Rails.application.routes.draw do
     end
   end
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Respond to OPTIONS request with 204 no content, not handled on rails API mode
+  match '*path', via: [:options], to: ->(_) { [204, {}, []] }
 end

@@ -1,4 +1,7 @@
 class User < ApplicationRecord
+
+  VALID_EMAIL_REGEX = /\A[^@\s]+@[^@\s]+\.[^@\s]+\z/
+  VALID_PASSWORD_REGEX = /\A(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}\z/
   # Include default devise modules. Others available are:
   # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
   devise :database_authenticatable, 
@@ -23,8 +26,16 @@ class User < ApplicationRecord
   # Validations  
   validates :name, presence: true
   validates :role, presence: true, inclusion: { in: %w[user admin merchant] }
+  validates :email, presence: true, uniqueness: true, format: { with: VALID_EMAIL_REGEX, message: "Must use a valid email" }
+  validates :password, format: { with: VALID_PASSWORD_REGEX, message: "Password must be at least 8 characters and include uppercase, lowercase, and numbers" }, if: :password_required?
 
   after_initialize :set_default_balance, if: :new_record?
+
+  scope :active, -> { where(deleted: [false, nil]) }
+
+  def soft_delete
+    update(deleted: true)
+  end
 
   def set_default_balance
     self.balance ||= 0.0
@@ -43,5 +54,11 @@ class User < ApplicationRecord
     sent = Friendship.where(requester_id: id, status: 'accepted').pluck(:receiver_id)
     received = Friendship.where(receiver_id: id, status: 'accepted').pluck(:requester_id)
     User.where(id: (sent + received).uniq)
+  end
+
+  private 
+
+  def password_required?
+    new_record? || !password.nil?
   end
 end

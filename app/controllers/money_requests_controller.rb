@@ -23,7 +23,12 @@ class MoneyRequestsController < ApplicationController
   end
 
   def index
-    requests = MoneyRequest.where(recipient: current_user, status: 'pending')
+    requests = MoneyRequest.where(recipient: current_user).order(created_at: :desc)
+    render json: requests
+  end
+
+  def sent
+    requests = MoneyRequest.where(requester: current_user).order(created_at: :desc)
     render json: requests
   end
 
